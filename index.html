@@ -82,6 +82,13 @@
             color: white;
         }
 
+        .btn-primary:disabled {
+            filter: grayscale(0.7) brightness(1.2);
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
         .btn-primary:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
@@ -407,7 +414,7 @@
             <div class="logo">Python Playground</div>
             <div class="header-buttons">
                 <button class="btn btn-secondary" onclick="clearEditor()">Clear</button>
-                <button class="btn btn-primary" onclick="checkCode()">Check Code</button>
+                <button class="btn btn-primary" id="checkCodeBtn" onclick="checkCode()" disabled>Check Code</button>
             </div>
         </header>
 
@@ -503,9 +510,11 @@
 
         // Program selection
         function selectProgram(button, programName) {
-            // Save current code before switching
+            const editor = document.getElementById('codeEditor');
+            const untitledCode = (!currentProgram ? editor.value : null);
+            // Save current code before switching (if a program was selected)
             if (currentProgram) {
-                const prevCode = document.getElementById('codeEditor').value;
+                const prevCode = editor.value;
                 localStorage.setItem('code_' + currentProgram, prevCode);
             }
             // Remove active class from all buttons
@@ -517,9 +526,16 @@
             // Update current program
             currentProgram = programName;
             document.getElementById('currentProgram').textContent = programName;
+            // Enable the Check Code button
+            document.getElementById('checkCodeBtn').disabled = false;
             // Load saved code if exists, else blank
-            const savedCode = localStorage.getItem('code_' + programName) || '';
-            document.getElementById('codeEditor').value = savedCode;
+            let savedCode = localStorage.getItem('code_' + programName) || '';
+            // If switching from untitled and code exists, and chosen program is empty, persist the code
+            if (untitledCode && !savedCode) {
+                savedCode = untitledCode;
+                localStorage.setItem('code_' + programName, untitledCode);
+            }
+            editor.value = savedCode;
             updateLineCount();
         }
 
@@ -569,6 +585,10 @@
             window._checkingCode = true;
             const code = document.getElementById('codeEditor').value;
             
+            if (!currentProgram) {
+                alert('Please select a program before checking your code.');
+                return;
+            }
             if (!code.trim()) {
                 alert('Please enter some code to check!');
                 return;
@@ -843,6 +863,7 @@
 
         // Initialize
         updateLineCount();
+        document.getElementById('checkCodeBtn').disabled = true;
     </script>
 </body>
 </html>
